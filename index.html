@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT老師的AI小教室</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Microsoft YaHei', 微軟正黑體, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #EAE6E1;
+    }
+
+    .nav-bar {
+      background: #E8E3DD;
+      border-bottom: 2px solid #D0C5BA;
+      padding: 15px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .nav-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      min-width: 180px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      background: #F5F2ED;
+      color: #5A4A40;
+      border: 2px solid;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .nav-btn.active {
+      color: white;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .admin-btn {
+      background: #8B8078;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .content {
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .category-title {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 25px;
+      margin-top: 20px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .prompt-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.3s;
+    }
+
+    .prompt-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .prompt-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: #F5F2ED;
+    }
+
+    .prompt-image-placeholder {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #D0C5BA 0%, #E8DDD0 100%);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8B8078;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .prompt-card h3 {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 0 0 8px 0;
+    }
+
+    .prompt-card p {
+      font-size: 14px;
+      color: #666;
+      margin: 0 0 12px 0;
+      line-height: 1.5;
+    }
+
+    .prompt-text {
+      background: #F5F2ED;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 12px;
+      flex: 1;
+      max-height: 120px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Arial, sans-serif;
+      color: #6B5B50;
+      border: 1px solid #E8DDD0;
+    }
+
+    .copy-btn {
+      width: 100%;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: auto;
+    }
+
+    .copy-btn:hover {
+      opacity: 0.9;
+    }
+
+    .copy-success {
+      background: #D0D8C8;
+      color: #5A6B50;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-top: 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .login-page {
+      min-height: 100vh;
+      background-color: #EAE6E1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .login-box h2 {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 2px solid #D0C5BA;
+      margin-bottom: 20px;
+      background: #F5F2ED;
+      color: #5A4A40;
+    }
+
+    .safety-notice {
+      padding: 20px;
+      max-width: 900px;
+      margin: 40px auto 20px;
+      background: #D8C4B8;
+      color: #5A4A40;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .safety-notice h3 {
+      margin: 0 0 10px 0;
+      font-weight: bold;
+    }
+
+    button {
+      font-family: 'Microsoft YaHei', 微軟正黑體, Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <!-- 首頁 -->
+  <div id="homePage" class="page active">
+    <div class="nav-bar">
+      <div class="nav-container">
+        <div class="nav-title">🎓 YT老師的AI小教室</div>
+        <div class="nav-buttons" id="navButtons"></div>
+        <button class="admin-btn" onclick="showLoginPage()">管理員</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <h2 id="categoryTitle" class="category-title"></h2>
+      <div id="cardsContainer" class="cards-grid"></div>
+    </div>
+
+    <div class="safety-notice">
+      <h3>⚠️ 安全提醒</h3>
+      <div>請不要輸入：身分證、銀行帳號、密碼、驗證碼、住址等敏感資訊。</div>
+    </div>
+  </div>
+
+  <!-- 登入頁面 -->
+  <div id="loginPage" class="page">
+    <div class="login-page">
+      <div class="login-box">
+        <h2>管理員登入</h2>
+        <input type="password" id="passwordInput" placeholder="輸入密碼" onkeypress="if(event.key==='Enter') handleAdminLogin()">
+        <button class="copy-btn" style="background: #8B8078" onclick="handleAdminLogin()">登入</button>
+        <button class="copy-btn" style="background: #D0C5BA; color: #5A4A40; margin-top: 10px;" onclick="showHomePage()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 後台頁面 -->
+  <div id="adminPage" class="page">
+    <div class="nav-bar">
+      <div class="nav-container">
+        <div class="nav-title">📝 後台管理</div>
+        <button class="admin-btn" style="background: #C8A8A8" onclick="handleLogout()">登出</button>
+      </div>
+    </div>
+    <div class="content" id="adminContent"></div>
+  </div>
+
+  <script>
+    // 數據
+    const CATEGORIES = [
+      { key: 'personal', name: '個人形象', color: '#C8A8A8', emoji: '✨' },
+      { key: 'presentation', name: '簡報常用', color: '#B8A89E', emoji: '🎯' },
+      { key: 'productivity', name: '工作生產力', color: '#8BA0A8', emoji: '⚡' },
+      { key: 'learning', name: '知識學習', color: '#9E8BA0', emoji: '📚' },
+      { key: 'growth', name: '自我成長', color: '#8E9E88', emoji: '🌱' },
+      { key: 'imageGen', name: '生圖Prompt', color: '#A89BA0', emoji: '🎨' }
+    ];
+
+    const DEFAULT_PROMPTS = {
+      personal: [
+        { id: 'p1', name: '自我介紹', description: '寫出自然、有特色的自我介紹。', prompt: '請幫我寫一段自我介紹。\n\n我的姓名或稱呼：＿＿＿＿\n我的工作或身分：＿＿＿＿\n我擅長的事情：＿＿＿＿\n我關心或喜歡的主題：＿＿＿＿\n我希望給人的感覺：＿＿＿＿\n\n請寫得自然、溫暖、有自信，不要太誇張。\n\n請提供 100 字以內版本。' },
+        { id: 'p2', name: '寫 LinkedIn 個人簡介', description: '整理專業經歷與個人特色。', prompt: '請幫我寫一段 LinkedIn 個人簡介。\n\n我的工作經歷或專業背景：\n＿＿＿＿\n\n我的專長：\n＿＿＿＿\n\n我重視的工作價值：\n＿＿＿＿\n\n請用專業、真誠、有溫度的繁體中文撰寫，字數約 200 字。' },
+        { id: 'p3', name: '寫個人品牌介紹', description: '整理自己可以提供的價值與服務。', prompt: '我想整理我的個人品牌介紹。\n\n我的專長或經驗是：\n＿＿＿＿\n\n我希望幫助的人是：\n＿＿＿＿\n\n我可以提供的價值是：\n＿＿＿＿\n\n請幫我寫成一段清楚、有溫度、讓人容易理解的介紹。\n\n請避免太多華麗或誇張的形容詞。' },
+        { id: 'p4', name: '寫社群貼文', description: '把想分享的經驗寫成自然、有共鳴的貼文。', prompt: '我想分享一段關於＿＿＿＿的經驗。\n\n我的故事或想法是：\n\n＿＿＿＿\n\n請幫我寫成一篇適合發在 Facebook 或 LinkedIn 的貼文。\n\n語氣要真誠、自然、有一點啟發性，不要太像廣告。\n\n請在最後加入一個可以邀請讀者思考的問題。' },
+        { id: 'p5', name: '準備演講開場', description: '寫出親切、有吸引力的開場白。', prompt: '我要為＿＿＿＿主題做一段開場。\n\n聽眾是：＿＿＿＿\n演講場合是：＿＿＿＿\n我希望帶出的感覺是：＿＿＿＿\n\n請幫我寫一段約 1 分鐘的開場白。\n\n要親切、自然，能讓聽眾願意繼續聽下去。' }
+      ],
+      presentation: [
+        { id: 'ps1', name: '簡報大綱結構', description: '快速生成簡報框架和內容結構。', prompt: '我要製作一份關於＿＿＿＿的簡報。\n\n主要內容：\n＿＿＿＿\n\n聽眾是：＿＿＿＿\n\n請幫我設計一個簡報大綱，包含：\n1. 標題頁\n2. 核心重點（3-5 個）\n3. 案例或數據\n4. 行動呼籲\n\n請提供每一頁的標題和簡單的內容提示。' },
+        { id: 'ps2', name: '簡報開場詞', description: '寫出能吸引觀眾的簡報開場。', prompt: '我要在簡報中開場，主題是＿＿＿＿。\n\n觀眾背景：\n＿＿＿＿\n\n請幫我寫一段有趣、引人入勝的開場詞，大約 100-150 字。\n\n要能快速抓住觀眾注意力，引發他們的興趣。' },
+        { id: 'ps3', name: '簡報結尾詞', description: '設計有力、留下印象的結尾。', prompt: '我的簡報主題是＿＿＿＿，核心重點是＿＿＿＿。\n\n請幫我寫一段強有力的結尾詞。\n\n內容應該包含：\n1. 核心重點的總結\n2. 為什麼這很重要\n3. 觀眾可以採取的下一步\n4. 一句令人印象深刻的結語' },
+        { id: 'ps4', name: '簡報視覺化建議', description: '獲得簡報設計和視覺化的靈感。', prompt: '我正在製作一份簡報，主題是＿＿＿＿。\n\n內容重點：\n＿＿＿＿\n\n請幫我提供以下建議：\n1. 整體配色方案（簡潔、專業）\n2. 每一頁應該用什麼視覺化方式呈現（圖表、圖片、文字）\n3. 字體大小和排版建議\n4. 圖表或圖片的主題建議' },
+        { id: 'ps5', name: '簡報話術準備', description: '準備簡報的詳細話術和解說。', prompt: '我要簡報一個重點：＿＿＿＿。\n\n詳細背景：\n＿＿＿＿\n\n請幫我寫出 2-3 分鐘的簡報話術。\n\n包含：\n1. 開場（說明為什麼這個議題重要）\n2. 詳細說明（用 2-3 個例子或論點）\n3. 結尾（核心重點回顧）' }
+      ],
+      productivity: [
+        { id: 'w1', name: '整理會議重點', description: '把零散的會議筆記整理成重點和待辦事項。', prompt: '我剛剛開了一場關於＿＿＿＿的會議。\n\n以下是我的會議筆記：\n\n＿＿＿＿\n\n請幫我整理成：\n1. 會議重點\n2. 已經決定的事情\n3. 待辦事項\n4. 每一件待辦事項的負責人和期限\n\n請用簡單、清楚的繁體中文整理。' },
+        { id: 'w2', name: '寫一封 Email', description: '把想說的內容整理成有禮貌、清楚的 Email。', prompt: '我要寫一封 Email 給＿＿＿＿。\n\n我想說的事情是：\n\n＿＿＿＿\n\n請幫我寫成一封清楚、有禮貌、但不要太過正式的 Email。\n\n請提供一個合適的信件主旨。' },
+        { id: 'w3', name: '安排今天的待辦事項', description: '依照重要性和時間，安排今天要做的事情。', prompt: '今天我需要完成以下事情：\n\n＿＿＿＿\n\n我今天大約有＿＿小時可以處理。\n\n請幫我依照重要性和急迫性，排出今天的工作順序。\n\n每一項請建議大約需要多少時間，並提醒我先完成最重要的事情。' },
+        { id: 'w4', name: '比較兩個選擇', description: '幫忙整理兩個方案的優點、缺點和建議。', prompt: '我正在考慮兩個選擇：\n\n選擇 A：＿＿＿＿\n\n選擇 B：＿＿＿＿\n\n我最在意的是：\n＿＿＿＿\n\n請用簡單的方式幫我比較兩者的優點、缺點和適合的情況。\n\n最後請給我一個建議，但也請告訴我這個建議的原因。' },
+        { id: 'w5', name: '把長內容整理成重點', description: '將文章、訊息或筆記整理成容易閱讀的重點。', prompt: '以下是一段較長的內容：\n\n＿＿＿＿\n\n請幫我用簡單的繁體中文整理。\n\n請分成：\n1. 三個最重要的重點\n2. 我需要採取的行動\n3. 有哪些地方需要再確認' }
+      ],
+      learning: [
+        { id: 'l1', name: '快速學習新概念', description: '用簡單方式理解和學習新的概念或知識。', prompt: '我想快速學習＿＿＿＿這個概念。\n\n背景：我目前的知識程度是＿＿＿＿。\n\n請用簡單、容易理解的方式解釋：\n1. 這個概念在說什麼\n2. 它為什麼重要\n3. 一個生活中的實例\n4. 學習資源建議' },
+        { id: 'l2', name: '準備考試或測驗', description: '生成考試題目和學習清單。', prompt: '我要準備＿＿＿＿的考試/測驗。\n\n主要內容：\n＿＿＿＿\n\n請幫我：\n1. 列出最重要的知識點（5-10 個）\n2. 針對每個知識點生成 1-2 個可能的題目\n3. 給我一個學習計畫\n4. 提醒我容易混淆的地方' },
+        { id: 'l3', name: '解釋複雜話題', description: '用淺白方式解釋難懂的理論或概念。', prompt: '我不懂＿＿＿＿，請幫我解釋。\n\n我想知道：\n＿＿＿＿\n\n請用最簡單的方式解釋，不要用太多專業術語。\n\n最好能用日常生活的例子來說明。' },
+        { id: 'l4', name: '學習進度評估', description: '檢測自己的學習成果和進度。', prompt: '我最近學習了＿＿＿＿。\n\n我認為我懂了：\n＿＿＿＿\n\n請根據我的描述：\n1. 評估我的理解程度\n2. 指出我可能遺漏或誤解的地方\n3. 建議下一步的學習方向\n4. 給我一些練習題' },
+        { id: 'l5', name: '製作學習筆記', description: '把零散的學習內容整理成有系統的筆記。', prompt: '我最近在學習＿＿＿＿。\n\n以下是我的學習內容和筆記：\n\n＿＿＿＿\n\n請幫我把這些內容重新組織成：\n1. 清晰的概念層級\n2. 重點總結\n3. 彼此的關聯\n4. 記憶技巧' }
+      ],
+      growth: [
+        { id: 'g1', name: '整理我的優勢', description: '從經驗中整理自己的能力與特質。', prompt: '以下是我做過的事情、別人常稱讚我的地方，或我覺得做起來比較順手的事情：\n\n＿＿＿＿\n\n請幫我整理出：\n1. 我可能擅長的能力\n2. 我重視的價值\n3. 我可以繼續發展的方向\n\n請具體說明，不要只給我空泛的稱讚。' },
+        { id: 'g2', name: '釐清目前的困擾', description: '把腦中混亂的事情慢慢整理清楚。', prompt: '我最近正在困擾這件事：\n\n＿＿＿＿\n\n請不要急著給我答案。\n\n請先一次問我一個簡單問題，幫我慢慢釐清：\n1. 我真正擔心的是什麼\n2. 我有哪些選擇\n3. 我最重視的是什麼\n\n等我回答後，再繼續問下一題。' },
+        { id: 'g3', name: '規劃下一步', description: '把想做的事轉換成可執行的小步驟。', prompt: '我想在＿＿＿＿方面往前一步。\n\n我目前的狀況是：\n＿＿＿＿\n\n我希望達到的目標是：\n＿＿＿＿\n\n請幫我規劃一個簡單、可執行的行動計畫。\n\n請分成：\n1. 這週可以做的第一步\n2. 這個月可以完成的事情\n3. 可能遇到的困難\n4. 遇到困難時可以怎麼調整' },
+        { id: 'g4', name: '反思與成長', description: '透過提問深化對經驗的理解和成長。', prompt: '最近我經歷了＿＿＿＿。\n\n當時我的感受和想法：\n＿＿＿＿\n\n請幫我深入思考：\n1. 這個經驗教了我什麼\n2. 我在這個過程中的優勢和不足\n3. 如果重來，我會怎麼做\n4. 這個經驗對我未來的影響' },
+        { id: 'g5', name: '寫給未來的自己', description: '整理現在的心情與對未來的期待。', prompt: '我想寫一封信給＿＿年後的自己。\n\n我現在的生活狀況和心情是：\n\n＿＿＿＿\n\n我希望未來的自己記得：\n\n＿＿＿＿\n\n請幫我寫成一封真誠、溫暖、有力量的信。\n\n語氣不要太說教，也不要太過悲傷。' }
+      ],
+      imageGen: [
+        { id: 'ig1', name: '日系手繪風格', description: '溫暖日系插畫風格的人物肖像', prompt: 'A warm watercolor illustration of a mature Asian businessman in his 50s, drawn in Japanese anime art style. Splashing watercolor background with blue and orange tones. Professional yet approachable expression, holding a pen. Artistic, vibrant, detailed character design. High quality digital illustration.', image: '' },
+        { id: 'ig2', name: '油畫人物肖像', description: '寫實油畫風格的專業人物肖像', prompt: 'A professional portrait of a businessman painted in classical oil painting style. Realistic, detailed, formal attire, studio lighting. Rich color palette with earth tones and warm lighting. Museum quality artwork.', image: '' },
+        { id: 'ig3', name: '極簡風格頭像', description: '極簡設計風格的個人頭像', prompt: 'Minimalist flat design portrait of a professional person. Simple geometric shapes, limited color palette, modern aesthetic. Clean lines, contemporary illustration style. Perfect for profile picture or avatar.', image: '' },
+        { id: 'ig4', name: '3D渲染風格', description: '3D渲染效果的人物角色', prompt: '3D rendered character design of a professional person. High quality 3D modeling, realistic lighting and shading. Modern, polished appearance. Suitable for corporate or professional use. Cinema 4D or similar quality.', image: '' },
+        { id: 'ig5', name: '漫畫風格人物', description: '動漫漫畫風格的角色設計', prompt: 'Manga style character illustration of a protagonist with expressive features. Black ink outlines, screentone shading, dynamic pose. Japanese comic book aesthetic. Professional character design quality.', image: '' }
+      ]
+    };
+
+    // 初始化
+    let prompts = (() => {
+      const saved = localStorage.getItem('yt_classroom_prompts');
+      return saved ? JSON.parse(saved) : DEFAULT_PROMPTS;
+    })();
+
+    let currentCategory = 'personal';
+
+    // 初始化導航按鈕
+    function initNav() {
+      const navButtons = document.getElementById('navButtons');
+      navButtons.innerHTML = CATEGORIES.map(cat => `
+        <button class="nav-btn ${cat.key === currentCategory ? 'active' : ''}" 
+                style="border-color: ${cat.color}; ${cat.key === currentCategory ? `background: ${cat.color}` : ''}"
+                onclick="selectCategory('${cat.key}')">
+          ${cat.emoji} ${cat.name}
+        </button>
+      `).join('');
+    }
+
+    // 選擇分類
+    function selectCategory(key) {
+      currentCategory = key;
+      const cat = CATEGORIES.find(c => c.key === key);
+      document.getElementById('categoryTitle').textContent = `${cat.emoji} ${cat.name}`;
+      document.getElementById('categoryTitle').style.color = cat.color;
+      
+      // 更新導航
+      const buttons = document.querySelectorAll('.nav-btn');
+      buttons.forEach(btn => {
+        if (btn.textContent.includes(cat.name)) {
+          btn.classList.add('active');
+          btn.style.background = cat.color;
+          btn.style.color = 'white';
+        } else {
+          btn.classList.remove('active');
+          btn.style.background = '#F5F2ED';
+          btn.style.color = '#5A4A40';
+        }
+      });
+
+      renderCards();
+    }
+
+    // 渲染卡片
+    function renderCards() {
+      const cat = CATEGORIES.find(c => c.key === currentCategory);
+      const container = document.getElementById('cardsContainer');
+      const categoryPrompts = prompts[currentCategory] || [];
+
+      container.innerHTML = categoryPrompts.map(prompt => {
+        const imageHtml = prompt.image 
+          ? `<img src="${prompt.image}" alt="${prompt.name}" class="prompt-image">`
+          : currentCategory === 'imageGen' 
+            ? `<div class="prompt-image-placeholder">🖼️ 範例圖片<br><small>（可在後台添加圖片URL）</small></div>`
+            : '';
+        
+        return `
+        <div class="prompt-card">
+          ${imageHtml}
+          <h3 style="color: ${cat.color}">${prompt.name}</h3>
+          <p>${prompt.description}</p>
+          <div class="prompt-text">${prompt.prompt}</div>
+          <button class="copy-btn" style="background: ${cat.color}" 
+                  onclick="copyPrompt('${prompt.id}', '${currentCategory}')">
+            📋 複製提示詞
+          </button>
+          <div id="success-${prompt.id}"></div>
+        </div>
+      `}).join('');
+    }
+
+    // 複製提示詞
+    function copyPrompt(id, category) {
+      const prompt = prompts[category].find(p => p.id === id);
+      navigator.clipboard.writeText(prompt.prompt).then(() => {
+        const successDiv = document.getElementById(`success-${id}`);
+        successDiv.innerHTML = '<div class="copy-success">✓ 已複製！</div>';
+        setTimeout(() => {
+          successDiv.innerHTML = '';
+        }, 3000);
+      });
+    }
+
+    // 顯示登入頁
+    function showLoginPage() {
+      document.getElementById('homePage').classList.remove('active');
+      document.getElementById('loginPage').classList.add('active');
+      document.getElementById('adminPage').classList.remove('active');
+      document.getElementById('passwordInput').focus();
+    }
+
+    // 顯示首頁
+    function showHomePage() {
+      document.getElementById('homePage').classList.add('active');
+      document.getElementById('loginPage').classList.remove('active');
+      document.getElementById('adminPage').classList.remove('active');
+    }
+
+    // 管理員登入
+    function handleAdminLogin() {
+      const password = document.getElementById('passwordInput').value;
+      if (password === '12345') {
+        localStorage.setItem('admin_logged_in', 'true');
+        document.getElementById('homePage').classList.remove('active');
+        document.getElementById('loginPage').classList.remove('active');
+        document.getElementById('adminPage').classList.add('active');
+        renderAdminPage();
+      } else {
+        alert('密碼錯誤');
+        document.getElementById('passwordInput').value = '';
+      }
+    }
+
+    // 渲染後台頁面
+    function renderAdminPage() {
+      const adminContent = document.getElementById('adminContent');
+      let html = '';
+
+      CATEGORIES.forEach(cat => {
+        const categoryPrompts = prompts[cat.key] || [];
+        html += `
+          <div>
+            <h2 style="color: ${cat.color}; font-size: 22px; margin-bottom: 15px;">
+              ${cat.emoji} ${cat.name}
+            </h2>
+            <button class="copy-btn" style="background: #8E9E88; width: auto; margin-bottom: 15px;" 
+                    onclick="addPrompt('${cat.key}')">
+              ➕ 新增提示詞
+            </button>
+            <div>
+              ${categoryPrompts.map(prompt => `
+                <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 10px; display: flex; gap: 10px;">
+                  <div style="flex: 1;">
+                    <h4 style="margin: 0 0 5px 0; font-size: 16px; font-weight: bold;">${prompt.name}</h4>
+                    <p style="margin: 0; font-size: 14px; color: #666;">${prompt.description}</p>
+                  </div>
+                  <button style="background: #8BA0A8; color: white; border: none; border-radius: 6px; padding: 10px 12px; cursor: pointer; font-weight: bold;" 
+                          onclick="editPrompt('${cat.key}', '${prompt.id}')">✏️</button>
+                  <button style="background: #A89898; color: white; border: none; border-radius: 6px; padding: 10px 12px; cursor: pointer; font-weight: bold;" 
+                          onclick="deletePrompt('${cat.key}', '${prompt.id}')">🗑️</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      adminContent.innerHTML = html;
+    }
+
+    // 新增提示詞
+    function addPrompt(category) {
+      const newId = `${category}_${Date.now()}`;
+      if (!prompts[category]) prompts[category] = [];
+      prompts[category].push({
+        id: newId,
+        name: '新提示詞',
+        description: '說明',
+        prompt: '提示詞內容'
+      });
+      localStorage.setItem('yt_classroom_prompts', JSON.stringify(prompts));
+      renderAdminPage();
+    }
+
+    // 刪除提示詞
+    function deletePrompt(category, id) {
+      if (confirm('確定要刪除嗎？')) {
+        prompts[category] = prompts[category].filter(p => p.id !== id);
+        localStorage.setItem('yt_classroom_prompts', JSON.stringify(prompts));
+        renderAdminPage();
+      }
+    }
+
+    // 編輯提示詞
+    function editPrompt(category, id) {
+      const promptItem = prompts[category].find(p => p.id === id);
+      
+      if (category === 'imageGen') {
+        showImageGenEditForm(category, id, promptItem);
+      } else {
+        const newName = window.prompt('編輯提示詞名稱:\n' + promptItem.name);
+        if (newName !== null) {
+          promptItem.name = newName;
+          localStorage.setItem('yt_classroom_prompts', JSON.stringify(prompts));
+          renderAdminPage();
+        }
+      }
+    }
+
+    // 顯示生圖編輯表單
+    function showImageGenEditForm(category, id, promptItem) {
+      const adminContent = document.getElementById('adminContent');
+      const form = `
+        <div style="background: white; padding: 20px; border-radius: 10px; max-width: 600px;">
+          <h2 style="margin-top: 0;">編輯生圖Prompt</h2>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; font-size: 16px; font-weight: bold; margin-bottom: 8px;">名稱</label>
+            <input type="text" id="editName" value="${promptItem.name}" style="width: 100%; padding: 10px; border: 2px solid #D0C5BA; border-radius: 6px; font-size: 14px;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; font-size: 16px; font-weight: bold; margin-bottom: 8px;">描述</label>
+            <input type="text" id="editDesc" value="${promptItem.description}" style="width: 100%; padding: 10px; border: 2px solid #D0C5BA; border-radius: 6px; font-size: 14px;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; font-size: 16px; font-weight: bold; margin-bottom: 8px;">圖片 URL</label>
+            <input type="text" id="editImage" value="${promptItem.image || ''}" placeholder="粘貼圖片URL" style="width: 100%; padding: 10px; border: 2px solid #D0C5BA; border-radius: 6px; font-size: 14px;">
+            ${promptItem.image ? `<div style="margin-top: 10px;"><img src="${promptItem.image}" style="max-width: 100%; max-height: 200px; border-radius: 6px;"></div>` : ''}
+          </div>
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 16px; font-weight: bold; margin-bottom: 8px;">提示詞</label>
+            <textarea id="editPrompt" style="width: 100%; padding: 10px; border: 2px solid #D0C5BA; border-radius: 6px; font-size: 14px; min-height: 150px;">${promptItem.prompt}</textarea>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button onclick="saveImageGenEdit('${category}', '${id}')" style="flex: 1; background: #8E9E88; color: white; border: none; border-radius: 6px; padding: 12px; cursor: pointer; font-weight: bold;">💾 保存</button>
+            <button onclick="renderAdminPage()" style="flex: 1; background: #D0C5BA; color: #5A4A40; border: none; border-radius: 6px; padding: 12px; cursor: pointer; font-weight: bold;">取消</button>
+          </div>
+        </div>
+      `;
+      adminContent.innerHTML = form;
+    }
+
+    // 保存生圖編輯
+    function saveImageGenEdit(category, id) {
+      const promptItem = prompts[category].find(p => p.id === id);
+      promptItem.name = document.getElementById('editName').value;
+      promptItem.description = document.getElementById('editDesc').value;
+      promptItem.prompt = document.getElementById('editPrompt').value;
+      promptItem.image = document.getElementById('editImage').value;
+      localStorage.setItem('yt_classroom_prompts', JSON.stringify(prompts));
+      renderAdminPage();
+    }
+
+    // 登出
+    function handleLogout() {
+      localStorage.removeItem('admin_logged_in');
+      showHomePage();
+      initNav();
+      renderCards();
+    }
+
+    // 初始化頁面
+    initNav();
+    selectCategory('personal');
+  </script>
+</body>
+</html>
