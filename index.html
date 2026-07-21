@@ -300,6 +300,7 @@
     <div class="nav-bar">
       <div class="nav-container">
         <div class="nav-title">📝 後台管理</div>
+        <button class="admin-btn" style="background: #8BA0A8" onclick="changeAdminPassword()">🔑 變更密碼</button>
         <button class="admin-btn" style="background: #C8A8A8" onclick="handleLogout()">登出</button>
       </div>
     </div>
@@ -461,10 +462,24 @@
       document.getElementById('adminPage').classList.remove('active');
     }
 
+    // 密碼相關（以 SHA-256 雜湊比對，避免明文密碼直接寫在原始碼中）
+    const DEFAULT_ADMIN_PASSWORD_HASH = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5';
+
+    async function hashPassword(text) {
+      const data = new TextEncoder().encode(text);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function getAdminPasswordHash() {
+      return localStorage.getItem('yt_classroom_admin_hash') || DEFAULT_ADMIN_PASSWORD_HASH;
+    }
+
     // 管理員登入
-    function handleAdminLogin() {
+    async function handleAdminLogin() {
       const password = document.getElementById('passwordInput').value;
-      if (password === '12345') {
+      const inputHash = await hashPassword(password);
+      if (inputHash === getAdminPasswordHash()) {
         localStorage.setItem('admin_logged_in', 'true');
         document.getElementById('homePage').classList.remove('active');
         document.getElementById('loginPage').classList.remove('active');
@@ -474,6 +489,26 @@
         alert('密碼錯誤');
         document.getElementById('passwordInput').value = '';
       }
+    }
+
+    // 變更管理員密碼
+    async function changeAdminPassword() {
+      const current = window.prompt('請輸入目前的密碼：');
+      if (current === null) return;
+      const currentHash = await hashPassword(current);
+      if (currentHash !== getAdminPasswordHash()) {
+        alert('目前密碼錯誤');
+        return;
+      }
+      const next = window.prompt('請輸入新密碼（至少 6 碼）：');
+      if (next === null) return;
+      if (next.length < 6) {
+        alert('新密碼至少需要 6 碼');
+        return;
+      }
+      const nextHash = await hashPassword(next);
+      localStorage.setItem('yt_classroom_admin_hash', nextHash);
+      alert('密碼已更新');
     }
 
     // 渲染後台頁面
