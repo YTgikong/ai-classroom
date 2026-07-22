@@ -552,14 +552,11 @@
     function addPrompt(category) {
       const newId = `${category}_${Date.now()}`;
       if (!prompts[category]) prompts[category] = [];
-      prompts[category].push({
-        id: newId,
-        name: '新提示詞',
-        description: '說明',
-        prompt: '提示詞內容'
-      });
-      localStorage.setItem('yt_classroom_prompts', JSON.stringify(prompts));
-      renderAdminPage();
+      const newItem = { id: newId, name: '', description: '', prompt: '' };
+      if (category === 'imageGen') newItem.image = '';
+      // 先只放進記憶體，尚未寫入 localStorage，取消時可直接捨棄
+      prompts[category].push(newItem);
+      showPromptEditForm(category, newId, true);
     }
 
     // 刪除提示詞
@@ -573,26 +570,22 @@
 
     // 編輯提示詞
     function editPrompt(category, id) {
-      const promptItem = prompts[category].find(p => p.id === id);
-      
-      if (category === 'imageGen') {
-        showImageGenEditForm(category, id, promptItem);
-      } else {
-        const newName = window.prompt('編輯提示詞名稱:\n' + promptItem.name);
-        if (newName !== null) {
-          promptItem.name = newName;
-          localStorage.setItem('yt_classroom_prompts', JSON.stringify(prompts));
-          renderAdminPage();
-        }
-      }
+      showPromptEditForm(category, id, false);
     }
 
-    // 顯示生圖編輯表單
-    function showImageGenEditForm(category, id, promptItem) {
+    // 顯示提示詞編輯表單（新增／編輯共用）
+    function showPromptEditForm(category, id, isNew) {
+      const promptItem = prompts[category].find(p => p.id === id);
       const adminContent = document.getElementById('adminContent');
+      const imageFieldHtml = category === 'imageGen' ? `
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; font-size: 16px; font-weight: bold; margin-bottom: 8px;">圖片 URL</label>
+            <input type="text" id="editImage" value="${promptItem.image || ''}" placeholder="粘貼圖片URL" style="width: 100%; padding: 10px; border: 2px solid #D0C5BA; border-radius: 6px; font-size: 14px;">
+            ${promptItem.image ? `<div style="margin-top: 10px;"><img src="${promptItem.image}" style="max-width: 100%; max-height: 200px; border-radius: 6px;"></div>` : ''}
+          </div>` : '';
       const form = `
         <div style="background: white; padding: 20px; border-radius: 10px; max-width: 600px;">
-          <h2 style="margin-top: 0;">編輯生圖Prompt</h2>
+          <h2 style="margin-top: 0;">${isNew ? '新增' : '編輯'}提示詞</h2>
           <div style="margin-bottom: 15px;">
             <label style="display: block; font-size: 16px; font-weight: bold; margin-bottom: 8px;">名稱</label>
             <input type="text" id="editName" value="${promptItem.name}" style="width: 100%; padding: 10px; border: 2px solid #D0C5BA; border-radius: 6px; font-size: 14px;">
@@ -601,32 +594,43 @@
             <label style="display: block; font-size: 16px; font-weight: bold; margin-bottom: 8px;">描述</label>
             <input type="text" id="editDesc" value="${promptItem.description}" style="width: 100%; padding: 10px; border: 2px solid #D0C5BA; border-radius: 6px; font-size: 14px;">
           </div>
-          <div style="margin-bottom: 15px;">
-            <label style="display: block; font-size: 16px; font-weight: bold; margin-bottom: 8px;">圖片 URL</label>
-            <input type="text" id="editImage" value="${promptItem.image || ''}" placeholder="粘貼圖片URL" style="width: 100%; padding: 10px; border: 2px solid #D0C5BA; border-radius: 6px; font-size: 14px;">
-            ${promptItem.image ? `<div style="margin-top: 10px;"><img src="${promptItem.image}" style="max-width: 100%; max-height: 200px; border-radius: 6px;"></div>` : ''}
-          </div>
+          ${imageFieldHtml}
           <div style="margin-bottom: 20px;">
             <label style="display: block; font-size: 16px; font-weight: bold; margin-bottom: 8px;">提示詞</label>
             <textarea id="editPrompt" style="width: 100%; padding: 10px; border: 2px solid #D0C5BA; border-radius: 6px; font-size: 14px; min-height: 150px;">${promptItem.prompt}</textarea>
           </div>
           <div style="display: flex; gap: 10px;">
-            <button onclick="saveImageGenEdit('${category}', '${id}')" style="flex: 1; background: #8E9E88; color: white; border: none; border-radius: 6px; padding: 12px; cursor: pointer; font-weight: bold;">💾 保存</button>
-            <button onclick="renderAdminPage()" style="flex: 1; background: #D0C5BA; color: #5A4A40; border: none; border-radius: 6px; padding: 12px; cursor: pointer; font-weight: bold;">取消</button>
+            <button onclick="savePromptEdit('${category}', '${id}', ${isNew})" style="flex: 1; background: #8E9E88; color: white; border: none; border-radius: 6px; padding: 12px; cursor: pointer; font-weight: bold;">💾 保存</button>
+            <button onclick="cancelPromptEdit('${category}', '${id}', ${isNew})" style="flex: 1; background: #D0C5BA; color: #5A4A40; border: none; border-radius: 6px; padding: 12px; cursor: pointer; font-weight: bold;">取消</button>
           </div>
         </div>
       `;
       adminContent.innerHTML = form;
     }
 
-    // 保存生圖編輯
-    function saveImageGenEdit(category, id) {
+    // 保存提示詞編輯
+    function savePromptEdit(category, id, isNew) {
       const promptItem = prompts[category].find(p => p.id === id);
-      promptItem.name = document.getElementById('editName').value;
+      const name = document.getElementById('editName').value.trim();
+      if (!name) {
+        alert('請輸入名稱');
+        return;
+      }
+      promptItem.name = name;
       promptItem.description = document.getElementById('editDesc').value;
       promptItem.prompt = document.getElementById('editPrompt').value;
-      promptItem.image = document.getElementById('editImage').value;
+      if (category === 'imageGen') {
+        promptItem.image = document.getElementById('editImage').value;
+      }
       localStorage.setItem('yt_classroom_prompts', JSON.stringify(prompts));
+      renderAdminPage();
+    }
+
+    // 取消提示詞編輯
+    function cancelPromptEdit(category, id, isNew) {
+      if (isNew) {
+        prompts[category] = prompts[category].filter(p => p.id !== id);
+      }
       renderAdminPage();
     }
 
