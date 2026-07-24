@@ -85,9 +85,11 @@
       background: transparent;
       border: none;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 14px;
       line-height: 1;
-      padding: 4px 8px;
+      padding: 4px 6px;
+      margin-left: 4px;
+      vertical-align: middle;
       opacity: 0.35;
       transition: opacity 0.2s;
     }
@@ -281,9 +283,8 @@
   <div id="homePage" class="page active">
     <div class="nav-bar">
       <div class="nav-container">
-        <div class="nav-title">🎓 YT老師的AI小教室</div>
+        <div class="nav-title">🎓 YT老師的AI小教室<button class="admin-icon-btn" onclick="showLoginPage()" title="管理員登入" aria-label="管理員登入">⚙️</button></div>
         <div class="nav-buttons" id="navButtons"></div>
-        <button class="admin-icon-btn" onclick="showLoginPage()" title="管理員登入" aria-label="管理員登入">⚙️</button>
       </div>
     </div>
 
