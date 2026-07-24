@@ -81,6 +81,21 @@
       white-space: nowrap;
     }
 
+    .admin-icon-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px 8px;
+      opacity: 0.35;
+      transition: opacity 0.2s;
+    }
+
+    .admin-icon-btn:hover {
+      opacity: 0.8;
+    }
+
     .page {
       display: none;
     }
@@ -268,7 +283,7 @@
       <div class="nav-container">
         <div class="nav-title">🎓 YT老師的AI小教室</div>
         <div class="nav-buttons" id="navButtons"></div>
-        <button class="admin-btn" onclick="showLoginPage()">管理員</button>
+        <button class="admin-icon-btn" onclick="showLoginPage()" title="管理員登入" aria-label="管理員登入">⚙️</button>
       </div>
     </div>
 
