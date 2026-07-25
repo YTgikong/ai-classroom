@@ -84,17 +84,17 @@ xdg-open index.html
 
 ## 💾 數據存儲
 
-所有提示詞存儲在瀏覽器 LocalStorage 中：
-- 自動保存所有編輯
-- 跨會話保留數據
-- 可導出為 JSON（在後台手動操作）
+提示詞資料存放在 `server/` 這個小型後端服務背後的 Redis 資料庫中：
+- 後台編輯／新增／刪除會即時透過 API 寫回伺服器
+- 所有裝置（電腦、手機）讀到的都是同一份資料，不會因為換瀏覽器或裝置而看不到更新
+- 詳見下方「後端服務部署」
 
 ## 🔐 安全性
 
 - ✅ 無需個人信息
-- ✅ 不上傳任何數據到伺服器
-- ✅ 本地密碼保護後台
+- ✅ 管理密碼由後端驗證（SHA-256 雜湊儲存，不落地明文）
 - ✅ 安全提醒已內置
+- ⚠️ 忘記密碼時，需要到 Zeabur 後端服務的環境變數重設 `ADMIN_PASSWORD_HASH` 並重新部署（詳見下方）
 
 ## 🌐 在線部署
 
@@ -143,11 +143,34 @@ git push -u origin main
 2. 添加自訂域名（如 `ai-classroom.holang.tw`）
 3. 按照指示配置 DNS
 
+## 🖥 後端服務部署（Zeabur）
+
+`server/` 資料夾是提供 `/api/prompts`、`/api/login` 等 API 的小型後端，讓所有裝置共用同一份提示詞資料。部署步驟：
+
+### 步驟一：新增 Redis 資料庫服務
+1. 在同一個 Zeabur 專案裡點「Add Service」→「Prebuilt」→ 選擇 **Redis**（或 KV）
+2. 建立完成後，到該服務的「Connection」分頁複製連線字串（`REDIS_URL`，格式類似 `redis://...`）
+
+### 步驟二：部署後端服務
+1. 在同一個 Zeabur 專案裡再點「Add Service」→「Git Repository」，選這個 repo
+2. 部署設定的 **Root Directory** 指定為 `server`
+3. 到該服務的「Variables」設定環境變數：
+   - `REDIS_URL`：貼上步驟一複製的連線字串
+   - `ADMIN_PASSWORD_HASH`（選填）：不設定則預設密碼為 `12345`
+4. 部署完成後，記下這個服務的網址（例如 `https://xxx.zeabur.app`）
+
+### 步驟三：串接前端
+把 `index.html` 裡的這一行改成步驟二拿到的後端網址，然後 commit / 部署：
+```js
+const API_BASE = 'https://xxx.zeabur.app'; // 換成你的後端服務網址
+```
+
 ## 📦 文件結構
 
 ```
 yt-ai-classroom/
-├── index.html          # 主應用文件
+├── index.html          # 主應用文件（前端）
+├── server/              # 後端 API（Node.js + Express + Redis）
 ├── README.md           # 項目文檔
 ├── .gitignore          # Git 忽略文件
 └── LICENSE             # MIT 許可證
@@ -156,7 +179,7 @@ yt-ai-classroom/
 ## 🛠 技術棧
 
 - **前端**: Pure HTML + CSS + JavaScript
-- **存儲**: Browser LocalStorage
+- **後端**: Node.js + Express + Redis（部署於 Zeabur）
 - **樣式**: 原生 CSS（無框架依賴）
 - **部署**: Zeabur / GitHub Pages
 

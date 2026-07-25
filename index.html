@@ -307,9 +307,6 @@
         <input type="password" id="passwordInput" placeholder="輸入密碼" onkeypress="if(event.key==='Enter') handleAdminLogin()">
         <button class="copy-btn" style="background: #8B8078" onclick="handleAdminLogin()">登入</button>
         <button class="copy-btn" style="background: #D0C5BA; color: #5A4A40; margin-top: 10px;" onclick="showHomePage()">取消</button>
-        <div style="text-align: center; margin-top: 15px;">
-          <a href="#" onclick="resetAdminPassword(); return false;" style="font-size: 13px; color: #8B8078;">忘記密碼？重設為預設密碼</a>
-        </div>
       </div>
     </div>
   </div>
@@ -382,13 +379,54 @@
       ]
     };
 
-    // 初始化
-    let prompts = (() => {
-      const saved = localStorage.getItem('yt_classroom_prompts');
-      return saved ? JSON.parse(saved) : DEFAULT_PROMPTS;
-    })();
+    // API 設定：後台資料現在存在共用的伺服器上，所有裝置都讀同一份
+    const API_BASE = 'http://localhost:8080'; // TODO: 部署後端服務後，改成 Zeabur 給的網址
 
+    // 初始化
+    let prompts = DEFAULT_PROMPTS;
+    let adminToken = localStorage.getItem('admin_token');
     let currentCategory = 'personal';
+
+    // 從伺服器載入最新的提示詞資料
+    async function loadPromptsFromServer() {
+      try {
+        const res = await fetch(`${API_BASE}/api/prompts`);
+        const data = await res.json();
+        if (data) {
+          prompts = data;
+          renderCards();
+          if (document.getElementById('adminPage').classList.contains('active')) {
+            renderAdminPage();
+          }
+        }
+      } catch (e) {
+        console.error('無法從伺服器載入提示詞，暫時顯示預設內容', e);
+      }
+    }
+
+    // 把目前的提示詞資料存回伺服器
+    async function savePromptsToServer() {
+      try {
+        const res = await fetch(`${API_BASE}/api/prompts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+          body: JSON.stringify(prompts)
+        });
+        if (res.status === 401) {
+          alert('登入已過期，請重新登入');
+          handleLogout();
+          return false;
+        }
+        if (!res.ok) {
+          alert('儲存失敗，請稍後再試');
+          return false;
+        }
+        return true;
+      } catch (e) {
+        alert('儲存失敗，請確認網路連線');
+        return false;
+      }
+    }
 
     // 初始化導航按鈕
     function initNav() {
@@ -481,30 +519,24 @@
       document.getElementById('adminPage').classList.remove('active');
     }
 
-    // 密碼相關（以 SHA-256 雜湊比對，避免明文密碼直接寫在原始碼中）
-    const DEFAULT_ADMIN_PASSWORD_HASH = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5';
-
-    async function hashPassword(text) {
-      const data = new TextEncoder().encode(text);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    function getAdminPasswordHash() {
-      return localStorage.getItem('yt_classroom_admin_hash') || DEFAULT_ADMIN_PASSWORD_HASH;
-    }
-
-    // 管理員登入
+    // 管理員登入（密碼驗證改在伺服器端進行）
     async function handleAdminLogin() {
       const password = document.getElementById('passwordInput').value;
-      const inputHash = await hashPassword(password);
-      if (inputHash === getAdminPasswordHash()) {
-        localStorage.setItem('admin_logged_in', 'true');
+      try {
+        const res = await fetch(`${API_BASE}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        if (!res.ok) throw new Error('登入失敗');
+        const data = await res.json();
+        adminToken = data.token;
+        localStorage.setItem('admin_token', adminToken);
         document.getElementById('homePage').classList.remove('active');
         document.getElementById('loginPage').classList.remove('active');
         document.getElementById('adminPage').classList.add('active');
         renderAdminPage();
-      } else {
+      } catch (e) {
         alert('密碼錯誤');
         document.getElementById('passwordInput').value = '';
       }
@@ -514,27 +546,22 @@
     async function changeAdminPassword() {
       const current = window.prompt('請輸入目前的密碼：');
       if (current === null) return;
-      const currentHash = await hashPassword(current);
-      if (currentHash !== getAdminPasswordHash()) {
-        alert('目前密碼錯誤');
-        return;
-      }
       const next = window.prompt('請輸入新密碼（至少 6 碼）：');
       if (next === null) return;
-      if (next.length < 6) {
-        alert('新密碼至少需要 6 碼');
-        return;
-      }
-      const nextHash = await hashPassword(next);
-      localStorage.setItem('yt_classroom_admin_hash', nextHash);
-      alert('密碼已更新');
-    }
-
-    // 忘記密碼：重設回預設密碼
-    function resetAdminPassword() {
-      if (confirm('確定要重設密碼為預設值 12345 嗎？')) {
-        localStorage.removeItem('yt_classroom_admin_hash');
-        alert('已重設為預設密碼 12345，請重新登入。');
+      try {
+        const res = await fetch(`${API_BASE}/api/change-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+          body: JSON.stringify({ currentPassword: current, newPassword: next })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || '變更密碼失敗');
+          return;
+        }
+        alert('密碼已更新');
+      } catch (e) {
+        alert('變更密碼失敗，請確認網路連線');
       }
     }
 
@@ -587,10 +614,10 @@
     }
 
     // 刪除提示詞
-    function deletePrompt(category, id) {
+    async function deletePrompt(category, id) {
       if (confirm('確定要刪除嗎？')) {
         prompts[category] = prompts[category].filter(p => p.id !== id);
-        localStorage.setItem('yt_classroom_prompts', JSON.stringify(prompts));
+        await savePromptsToServer();
         renderAdminPage();
       }
     }
@@ -636,7 +663,7 @@
     }
 
     // 保存提示詞編輯
-    function savePromptEdit(category, id, isNew) {
+    async function savePromptEdit(category, id, isNew) {
       const promptItem = prompts[category].find(p => p.id === id);
       const name = document.getElementById('editName').value.trim();
       if (!name) {
@@ -649,7 +676,7 @@
       if (category === 'imageGen') {
         promptItem.image = document.getElementById('editImage').value;
       }
-      localStorage.setItem('yt_classroom_prompts', JSON.stringify(prompts));
+      await savePromptsToServer();
       renderAdminPage();
     }
 
@@ -663,7 +690,11 @@
 
     // 登出
     function handleLogout() {
-      localStorage.removeItem('admin_logged_in');
+      if (adminToken) {
+        fetch(`${API_BASE}/api/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${adminToken}` } }).catch(() => {});
+      }
+      adminToken = null;
+      localStorage.removeItem('admin_token');
       showHomePage();
       initNav();
       renderCards();
@@ -672,6 +703,7 @@
     // 初始化頁面
     initNav();
     selectCategory('personal');
+    loadPromptsFromServer();
   </script>
 </body>
 </html>
