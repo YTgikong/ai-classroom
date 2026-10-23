@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+  <script>
+    if (location.hostname.endsWith('zeabur.app')) {
+      location.replace('https://ai-class.yttalk.tw' + location.pathname + location.search + location.hash);
+    }
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YT老師的AI小教室</title>
@@ -379,8 +384,8 @@
       ]
     };
 
-    // API 設定：後台資料現在存在共用的伺服器上，所有裝置都讀同一份
-    const API_BASE = 'https://ai-classroom-api.zeabur.app';
+    // API 設定：後端在同一個網站底下（Cloudflare Pages Functions：functions/api/），所有裝置都讀同一份
+    const API_BASE = '';
 
     // 初始化
     let prompts = DEFAULT_PROMPTS;
